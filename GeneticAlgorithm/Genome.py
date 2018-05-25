@@ -12,7 +12,7 @@ class Genome:
         self.l = l
         if alleles is None:
             self.alleles = np.full(self.size, False)
-            inds = np.random.choice(self.alleles.size, size=l, replace=False)  # Get random indices
+            inds = np.random.choice(self.alleles.size, size=l, replace=False)  # Get l random indices
             self.alleles[inds] = True
         else:
             self.alleles = alleles

@@ -13,6 +13,7 @@ Warning: Use spaces instead of tabs, or configure your editor to transform tab t
 import argparse
 import os
 import numpy as np
+import random
 from docplex.mp.model import *
 from GeneticAlgorithm.GeneticAlgorithm import GeneticAlgorithm
 from GeneticAlgorithm.Genome import Genome
@@ -24,6 +25,7 @@ class MDMT:
 
         self.M, self.L, self.l, self.d = self.read_instance_file(instance_file)
         self.name = os.path.basename(instance_file)
+        self.model = None
 
     @staticmethod
     def read_instance_file(file):
@@ -41,16 +43,17 @@ class MDMT:
 
     def calculate_mdmt(self, x):
         mdmt = 0
-
         for i in range(self.M):
+            # Mínimo valor da linha i considerando apenas as colunas onde x não é zero
             mdmt += np.min(self.d[i][np.flatnonzero(x)])
-        return mdmt - 100*(abs(sum(x) - self.l))
+        return mdmt - 100*(abs(sum(x) - self.l))  # É descontado 100 para cada vértice a menos ou a mais do que l
 
     def _init_cplex(self):
+        if self.model is not None:
+            return
 
         self.model = Model(name=self.name)
-        self.model.parameters.mip.strategy.nodeselect = 0  #DFS
-        self.model.parameters.mip.strategy.variableselect = 3  #Strong Branching
+        self.model.parameters.mip.strategy.variableselect = 3  # Strong Branching
         self.x_vars = None
         self.D_vars = None
         self.cplex_solution = None
@@ -68,9 +71,10 @@ class MDMT:
 
         self.model.add_constraint(sum(self.x_vars) == self.l)
 
+        big_constant = self.d.max()
         for i in range(self.M):
             for j in range(self.L):
-                self.model.add_constraint(self.D_vars[i] <= self.d[i][j] + 100000*(1 - self.x_vars[j]))
+                self.model.add_constraint(self.D_vars[i] <= self.d[i][j] + big_constant*(1 - self.x_vars[j]))
 
     def _generate_objective_function(self):
 
@@ -101,18 +105,28 @@ class MDMT:
         with open(self.name + '.lp', 'w') as lp_file:
             lp_file.write(self.model.export_as_lp_string())
 
-    def solve_ga(self):
+    def solve_ga(self, p, g, m, e, out_file):
+
+        np.random.seed(42)
+        random.seed(42)
 
         genome = Genome(self.L, self.l)
-        self.ga = GeneticAlgorithm(genome, pop_size=50, num_generations=10000, mutation_rate=0.01, elitism_rate=0.1)
+        self.ga = GeneticAlgorithm(genome, pop_size=p, num_generations=g, mutation_rate=m, elitism_rate=e, out_filename=out_file)
         self.ga.fitness_function = self.calculate_mdmt
         self.ga.evolve()
+
+
+def valid_rate(x):
+    x = float(x)
+    if x < 0 or x > 1:
+        raise argparse.ArgumentTypeError("Rate must be between 0 and 1")
+    return x
 
 
 if __name__ == '__main__':
 
     prs = argparse.ArgumentParser(formatter_class=argparse.ArgumentDefaultsHelpFormatter,
-                                  description="""MDMT Problem Solver""")
+                                  description="""MDMT(Maior Distância Mínima Total) Solver""")
     prs.add_argument("-f", dest="file", required=True, help="The instance file.\n")
 
     prs.add_argument("-lp", action="store_true", default=False, help="Generate LP file of the problem.\n")
@@ -120,6 +134,10 @@ if __name__ == '__main__':
     prs.add_argument("-out", help="Output File name")
 
     prs.add_argument("-ga", action="store_true", default=False, help="Solve with Genetic Algorithm")
+    prs.add_argument("-m", default=0.01, type=valid_rate, help="Mutation Rate of the Genetic Algorithm")
+    prs.add_argument("-e", default=0.1, type=valid_rate, help="Elitism Rate of the Genetic Algorithm")
+    prs.add_argument("-p", default=50, help="Population Size of the Genetic Algorithm")
+    prs.add_argument("-g", default=10000, help="Max Number Of Generations of the Genetic Algorithm")
 
     prs.add_argument("-cplex", action="store_true", default=False, help="Solve with Cplex")
 
@@ -132,7 +150,7 @@ if __name__ == '__main__':
         args.ga = False
 
     if args.ga:
-        m.solve_ga()
+        m.solve_ga(p=args.p, g=args.g, m=args.m, e=args.e, out_file=args.out)
 
     if args.lp:
         m.generate_lp()

@@ -2,14 +2,13 @@ import random
 import copy
 import heapq
 import numpy as np
+import time
 from .Genome import Genome
 
 
 class GeneticAlgorithm:
 
-    def __init__(self, genome, pop_size=50, num_generations=100, mutation_rate=0.01, elitism_rate=0.1, write_result=False):
-
-        np.random.seed(42)
+    def __init__(self, genome, pop_size=50, num_generations=100, mutation_rate=0.01, elitism_rate=0.1, out_filename=None):
 
         self.pop_size = pop_size
         self.population = [genome] + [Genome(genome.size, genome.l) for _ in range(self.pop_size - 1)]
@@ -22,20 +21,23 @@ class GeneticAlgorithm:
         self.elitism_rate = elitism_rate
         self.best_genome = None
         self.generation = 1
-        self.write_result = write_result
-        if write_result:
-            self.file = open("ga_p{}m{}e{}.txt".format(self.pop_size, self.mutation_rate, self.elitism_rate), 'w+')
+        self.out_file = out_filename
+        if out_filename is not None:
+            self.out_file = open(out_filename, 'w+')
 
     def evolve(self):
+        start = time.time()
 
         # First generation
         self.eval(self.population)
         self.best_genome = max(self.population, key=lambda x: x.fitness)
-        print("Generation {}".format(self.generation))
-        print(self.best_genome)
-        if self.write_result:
-            self.file.write("{} {}\n".format(self.generation, self.best_genome.score))
         self.generation += 1
+
+        print("Generation {} ".format(self.generation), end='')
+        print(self.best_genome)
+        if self.out_file is not None:
+            self.out_file.write("GA - pop_size={} mutation_rate={} elitism_rate{}\n".format(self.pop_size, self.mutation_rate, self.elitism_rate))
+            self.out_file.write("{} {}\n".format(self.generation, self.best_genome.score))
 
         while not self.termination_criteria(self):
             next_pop = []
@@ -62,15 +64,18 @@ class GeneticAlgorithm:
             # Update population
             self.population = next_pop
 
-            print("Generation {}".format(self.generation))
+            print("Generation {} ".format(self.generation), end='')
             print(self.best_genome)
-            if self.write_result:
-                self.file.write("{} {}\n".format(self.generation, self.best_genome.fitness))
+            if self.out_file is not None:
+                self.out_file.write("{} {}\n".format(self.generation, self.best_genome.fitness))
 
             self.generation += 1
 
-        if self.write_result:
-            self.file.close()
+        total_time = time.time() - start
+        if self.out_file is not None:
+            self.out_file.write("Time elapsed = {}\n".format(total_time))
+            self.out_file.close()
+        print("Time elapsed = {}".format(total_time))
 
     def eval(self, genomes):
         for g in genomes:
