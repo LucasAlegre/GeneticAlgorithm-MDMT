@@ -53,7 +53,7 @@ class MDMT:
             return
 
         self.model = Model(name=self.name)
-        self.model.parameters.mip.strategy.variableselect = 3  # Strong Branching
+        self.model.set_time_limit(1800)
         self.x_vars = None
         self.D_vars = None
         self.cplex_solution = None
