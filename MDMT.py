@@ -16,7 +16,7 @@ import numpy as np
 import random
 from docplex.mp.model import *
 from GeneticAlgorithm.GeneticAlgorithm import GeneticAlgorithm
-from GeneticAlgorithm.Genome import Genome
+from GeneticAlgorithm.Chromossome import Chromossome
 
 
 class MDMT:
@@ -46,14 +46,13 @@ class MDMT:
         for i in range(self.M):
             # Mínimo valor da linha i considerando apenas as colunas onde x não é zero
             mdmt += np.min(self.d[i][np.flatnonzero(x)])
-        return mdmt - 100*(abs(sum(x) - self.l))  # É descontado 100 para cada vértice a menos ou a mais do que l
+        return mdmt
 
     def _init_cplex(self):
         if self.model is not None:
             return
 
         self.model = Model(name=self.name)
-        self.model.set_time_limit(1800)
         self.x_vars = None
         self.D_vars = None
         self.cplex_solution = None
@@ -80,10 +79,11 @@ class MDMT:
 
         self.model.maximize(sum(self.D_vars))
 
-    def solve_cplex(self, verbose=False):
+    def solve_cplex(self, verbose=False, time_limit=1800):
 
         self._init_cplex()
         self.model.context.solver.log_output = verbose
+        self.model.set_time_limit(time_limit)
 
         solution = self.model.solve()
 
@@ -105,13 +105,13 @@ class MDMT:
         with open(self.name + '.lp', 'w') as lp_file:
             lp_file.write(self.model.export_as_lp_string())
 
-    def solve_ga(self, p, g, m, e, out_file):
+    def solve_ga(self, p, g, m, e, k, out_file, time_limit, seed):
 
-        np.random.seed(42)
-        random.seed(42)
+        # np.random.seed(42)
+        # random.seed(42)
 
-        genome = Genome(self.L, self.l)
-        self.ga = GeneticAlgorithm(genome, pop_size=p, num_generations=g, mutation_rate=m, elitism_rate=e, out_filename=out_file)
+        chromossome = Chromossome(self.L, self.l)
+        self.ga = GeneticAlgorithm(chromossome, pop_size=p, max_no_improv=g, mutation_rate=m, elitism_rate=e, k=k, out_filename=out_file, time_limit=time_limit)
         self.ga.fitness_function = self.calculate_mdmt
         self.ga.evolve()
 
@@ -131,13 +131,16 @@ if __name__ == '__main__':
 
     prs.add_argument("-lp", action="store_true", default=False, help="Generate LP file of the problem.\n")
 
-    prs.add_argument("-out", help="Output File name")
+    prs.add_argument("-out", help="Output Filename, for best solution and time elapsed")
 
     prs.add_argument("-ga", action="store_true", default=False, help="Solve with Genetic Algorithm")
-    prs.add_argument("-m", default=0.01, type=valid_rate, help="Mutation Rate of the Genetic Algorithm")
+    prs.add_argument("-m", default=0.1, type=valid_rate, help="Mutation Rate of the Genetic Algorithm")
     prs.add_argument("-e", default=0.1, type=valid_rate, help="Elitism Rate of the Genetic Algorithm")
-    prs.add_argument("-p", default=50, help="Population Size of the Genetic Algorithm")
-    prs.add_argument("-g", default=10000, help="Max Number Of Generations of the Genetic Algorithm")
+    prs.add_argument("-p", default=50, type=int, help="Population Size of the Genetic Algorithm")
+    prs.add_argument("-g", default=200, type=int, help="Max Number Of Generations Without Improvement of the Genetic Algorithm")
+    prs.add_argument("-t", default=600, type=float, help="Time Limit")
+    prs.add_argument("-k", default=4, type=int, help="Number of Individuals Choosen on Tournament Selection")
+    prs.add_argument("-s", default=42, type=int, help="Random Seed")
 
     prs.add_argument("-cplex", action="store_true", default=False, help="Solve with Cplex")
 
@@ -146,11 +149,11 @@ if __name__ == '__main__':
     m = MDMT(args.file)
 
     if args.cplex:
-        m.solve_cplex(verbose=True)
+        m.solve_cplex(verbose=True, time_limit=args.t)
         args.ga = False
 
     if args.ga:
-        m.solve_ga(p=args.p, g=args.g, m=args.m, e=args.e, out_file=args.out)
+        m.solve_ga(p=args.p, g=args.g, m=args.m, e=args.e, k=args.k, out_file=args.out, time_limit=args.t, seed=args.s)
 
     if args.lp:
         m.generate_lp()
