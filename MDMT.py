@@ -43,9 +43,10 @@ class MDMT:
 
     def calculate_mdmt(self, x):
         mdmt = 0
+        vertices_chosen = np.flatnonzero(x)
         for i in range(self.M):
-            # Mínimo valor da linha i considerando apenas as colunas onde x não é zero
-            mdmt += np.min(self.d[i][np.flatnonzero(x)])
+            # Mínimo valor da linha do vértice Mi considerando apenas as colunas dos vértices L escolhidos
+            mdmt += np.min(self.d[i][vertices_chosen])
         return mdmt
 
     def _init_cplex(self):
@@ -107,8 +108,9 @@ class MDMT:
 
     def solve_ga(self, p, g, m, e, k, out_file, time_limit, seed):
 
-        # np.random.seed(42)
-        # random.seed(42)
+        if seed is not None:
+            np.random.seed(seed)
+            random.seed(seed)
 
         chromossome = Chromossome(self.L, self.l)
         self.ga = GeneticAlgorithm(chromossome, pop_size=p, max_no_improv=g, mutation_rate=m, elitism_rate=e, k=k, out_filename=out_file, time_limit=time_limit)
@@ -140,7 +142,7 @@ if __name__ == '__main__':
     prs.add_argument("-g", default=200, type=int, help="Max Number Of Generations Without Improvement of the Genetic Algorithm")
     prs.add_argument("-t", default=600, type=float, help="Time Limit")
     prs.add_argument("-k", default=4, type=int, help="Number of Individuals Choosen on Tournament Selection")
-    prs.add_argument("-s", default=42, type=int, help="Random Seed")
+    prs.add_argument("-s", type=int, help="Random Seed")
 
     prs.add_argument("-cplex", action="store_true", default=False, help="Solve with Cplex")
 
