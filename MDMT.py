@@ -1,15 +1,3 @@
-"""
-Changelog:
-    v1.0 - Changelog created. <04/10/2017>
-    v1.1 - Function string bug corrected
-    v1.2 - Git Repository created
-    v2.0 - Included more constraints, which were causing some networks to give a wrong answer <10/03/2018>
-Maintainer: Lucas Nunes Alegre (lucasnale@gmail.com)
-Created (changelog): 04/10/2017
-This module contains the System Optimal Solver, which calculates the SO of a network.
-Warning: Use spaces instead of tabs, or configure your editor to transform tab to 4 spaces.
-"""
-
 import argparse
 import os
 import numpy as np
@@ -20,6 +8,17 @@ from GeneticAlgorithm.Chromossome import Chromossome
 
 
 class MDMT:
+    """Instance of the MDMT problem
+
+    Attributes:
+        M (int): Number of vertices on the partition M of the graph.
+        L (int): Number of vertices on the partition L of the graph.
+        l (int): Number of vertices chosen from partition L on each solution.
+        d (np int matrix): Matrix MxL with cost from each vertice on M to each vertice on L.
+        name (str): Name of the instance
+        model (cplex model): The model of the problem on cplex.
+
+    """
 
     def __init__(self, instance_file):
 
@@ -136,10 +135,10 @@ if __name__ == '__main__':
     prs.add_argument("-out", help="Output Filename, for best solution and time elapsed")
 
     prs.add_argument("-ga", action="store_true", default=False, help="Solve with Genetic Algorithm")
-    prs.add_argument("-m", default=0.1, type=valid_rate, help="Mutation Rate of the Genetic Algorithm")
+    prs.add_argument("-m", default=0.3, type=valid_rate, help="Mutation Rate of the Genetic Algorithm")
     prs.add_argument("-e", default=0.1, type=valid_rate, help="Elitism Rate of the Genetic Algorithm")
     prs.add_argument("-p", default=50, type=int, help="Population Size of the Genetic Algorithm")
-    prs.add_argument("-g", default=200, type=int, help="Max Number Of Generations Without Improvement of the Genetic Algorithm")
+    prs.add_argument("-g", default=400, type=int, help="Max Number Of Generations Without Improvement of the Genetic Algorithm")
     prs.add_argument("-t", default=600, type=float, help="Time Limit")
     prs.add_argument("-k", default=4, type=int, help="Number of Individuals Choosen on Tournament Selection")
     prs.add_argument("-s", type=int, help="Random Seed")
