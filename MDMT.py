@@ -17,7 +17,6 @@ class MDMT:
         d (np int matrix): Matrix MxL with cost from each vertice on M to each vertice on L.
         name (str): Name of the instance
         model (cplex model): The model of the problem on cplex.
-
     """
 
     def __init__(self, instance_file):

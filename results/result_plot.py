@@ -69,7 +69,7 @@ if __name__ == '__main__':
     plt.title("population_size vs. Tempo de execução")
     plt.show()
     '''
-    
+    '''
     plt.figure(1)
 
     x = [i/100 for i in range(0, 51, 10)]
@@ -99,7 +99,7 @@ if __name__ == '__main__':
     plt.xlabel("elitism_rate")
     plt.title("elitism_rate vs. Tempo de execução")
     plt.show()
-    
+    '''
     '''
     plt.figure(1)
 
@@ -132,5 +132,42 @@ if __name__ == '__main__':
     plt.title("mutation_rate vs. Tempo de execução")
     plt.show()
     '''
+
+    n_groups = 10
+
+    cplex = (13.11, 9.84, 24.85, 9.08, 23.96, 6.43, 20.46, 7.08, 5.43, 4.59)
+    media = (-1.5, 7.09, 5.05, 0.95, 4.45, 0.31, 3.25, 2.42, 2.95, 0.49)
+    melhor = (-2.61, 6.32, 3.35, -1.15, 3.02, -0.97, 2.77, 0.98, 2.15, 0.09)
+
+    fig, ax = plt.subplots()
+
+    index = np.arange(n_groups)
+    bar_width = 0.2
+    opacity = 1
+    error_config = {'ecolor': '0.3'}
+
+    rects1 = ax.bar(index, cplex, bar_width,
+	        alpha=opacity, color='RoyalBlue', error_kw=error_config,
+	        label='CPLEX', zorder=3)
+
+    rects2 = ax.bar(index + bar_width, media, bar_width,
+	        alpha=opacity, color='Goldenrod', error_kw=error_config,
+	        label='AG - Valor Médio', zorder=3)
+
+    rects3 = ax.bar(index + bar_width*2, melhor, bar_width,
+	        alpha=opacity, color='Teal', error_kw=error_config,
+	        label='AG - Melhor Valor', zorder=3)
+
+    ax.set_xlabel('Instância')
+    ax.set_ylabel('Desvio para o BKV (%)')
+    ax.set_title('Comparação dos testes das instâncias')
+    ax.set_xticks(index + bar_width)
+    ax.set_yticks([i for i in range(-4,27,2)])
+    ax.set_xticklabels(('mdmt39.112.A', 'mdmt39.112.B', 'mdmt39.225.A', 'mdmt39.225.B', 'mdmt40.56.A', 'mdmt40.56.B', 'mdmt40.112.A', 'mdmt40.112.B', 'mdmt40.225.A', 'mdmt40.225.B'))
+    ax.legend()
+    ax.yaxis.grid()
+
+    fig.tight_layout()
+    plt.show()
 
 
